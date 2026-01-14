@@ -17,7 +17,7 @@ return new class extends Migration
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $guard = 'web';
-        $types = ['incoming', 'outgoing', 'memo', 'personal'];
+        $types = ['external', 'internal', 'memo', 'personal_request', 'outgoing'];
         $actions = ['view', 'create', 'update', 'delete'];
 
         foreach ($types as $type) {
@@ -41,7 +41,7 @@ return new class extends Migration
             return;
         }
 
-        $types = ['incoming', 'outgoing', 'memo', 'personal'];
+        $types = ['external', 'internal', 'memo', 'personal_request', 'outgoing'];
         $actions = ['view', 'create', 'update', 'delete'];
         $names = [];
         foreach ($types as $t) {
