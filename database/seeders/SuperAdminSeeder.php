@@ -15,7 +15,7 @@ class SuperAdminSeeder extends Seeder
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $role = Role::query()->firstOrCreate([
-            'name' => 'عبدالله سعد محمود شوكت',
+            'name' => 'superadmin',
             'guard_name' => 'web',
         ]);
 
@@ -23,7 +23,7 @@ class SuperAdminSeeder extends Seeder
             ['email' => 'abdullahs.mahmood@uomosul.edu.iq'],
             [
                 'name' => 'Super Admin',
-                'password' => Hash::make('ChangeMeNow!123'),
+                'password' => Hash::make('11223344'),
             ]
         );
 
