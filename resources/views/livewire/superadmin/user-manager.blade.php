@@ -5,25 +5,32 @@
         </h2>
         <div class="ms-auto d-flex gap-2">
             <select class="form-select" style="max-width: 280px;" wire:model.live="selectedInstitutionId">
-                <option value="">اختر المؤسسة</option>
+                <option value="">حسابات المشرفين العامين</option>
                 @foreach($institutions as $inst)
                 <option value="{{ $inst->id }}">{{ $inst->name }}</option>
                 @endforeach
             </select>
-            <button class="btn btn-primary" wire:click="openCreateModal" @disabled(!$selectedInstitutionId)
-                title="إضافة مستخدم للمؤسسة المحددة">
+            <button class="btn btn-primary" wire:click="openCreateModal" title="إضافة مستخدم ">
                 <i class="fa-solid fa-user-plus me-1"></i>
                 إضافة مستخدم
             </button>
-            <input type="text" class="form-control" placeholder="بحث بالاسم/البريد" wire:model.live="search" style="max-width: 280px;">
+            <input type="text" class="form-control" placeholder="بحث بالاسم/البريد" wire:model.live="search"
+                style="max-width: 280px;">
         </div>
     </div>
     <!-- Create User Modal -->
-    <div class="modal fade @if($showCreateModal) show @endif" @if($showCreateModal) style="display:block;" @endif tabindex="-1" role="dialog">
+    <div class="modal fade @if($showCreateModal) show @endif" @if($showCreateModal) style="display:block;" @endif
+        tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">إضافة مستخدم للمؤسسة المختارة</h5>
+                    <h5 class="modal-title">
+                        @if(is_null($selectedInstitutionId))
+                        إضافة مشرف عام
+                        @else
+                        إضافة مستخدم للمؤسسة المختارة
+                        @endif
+                    </h5>
                     <button type="button" class="btn-close" wire:click="closeCreateModal" aria-label="Close"></button>
                 </div>
                 <form wire:submit.prevent="createUser">
@@ -70,54 +77,62 @@
                         <th>الاسم</th>
                         <th>البريد</th>
                         <th>المؤسسة</th>
+                        @if(!is_null($selectedInstitutionId))
                         <th>مدير</th>
                         <th>صلاحيات المستخدم</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
-                @foreach($users as $u)
+                    @foreach($users as $u)
                     <tr>
                         <td>{{ $u->id }}</td>
                         <td>{{ $u->name }}</td>
                         <td>{{ $u->email }}</td>
                         <td>{{ optional($u->institution)->name }}</td>
+                        @if(!is_null($selectedInstitutionId))
                         <td>
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="is-admin-{{ $u->id }}" @checked($u->hasRole('admin'))
-                                       wire:change="updateAdminRole({{ $u->id }}, $event.target.checked)">
+                                <input class="form-check-input" type="checkbox" id="is-admin-{{ $u->id }}"
+                                    @checked($u->hasRole('admin'))
+                                wire:change="updateAdminRole({{ $u->id }}, $event.target.checked)">
                                 <label class="form-check-label" for="is-admin-{{ $u->id }}">مدير مؤسسة</label>
                             </div>
                         </td>
                         <td>
                             @if(!$u->hasRole('admin'))
-                                <div class="row g-2">
-                                    @foreach($types as $tKey => $tLabel)
-                                        <div class="col-md-6">
-                                            <div class="border rounded p-2">
-                                                <div class="fw-bold mb-2">{{ $tLabel }}</div>
-                                                <div class="d-flex flex-wrap gap-2">
-                                                    @php($actions = ['view' => 'عرض','create' => 'إنشاء','update' => 'تعديل','delete' => 'حذف'])
-                                                    @foreach($actions as $actKey => $actLabel)
-                                                        @php($perm = 'letters.' . $tKey . '.' . $actKey)
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox"
-                                                                   id="perm-{{ $u->id }}-{{ $tKey }}-{{ $actKey }}"
-                                                                   @checked($u->getPermissionNames()->contains($perm))
-                                                                   wire:change="updateUserPermission({{ $u->id }}, '{{ $tKey }}', '{{ $actKey }}', $event.target.checked)">
-                                                            <label class="form-check-label" for="perm-{{ $u->id }}-{{ $tKey }}-{{ $actKey }}">{{ $actLabel }}</label>
-                                                        </div>
-                                                    @endforeach
-                                                </div>
+                            <div class="row g-2">
+                                @foreach($types as $tKey => $tLabel)
+                                <div class="col-md-6">
+                                    <div class="border rounded p-2">
+                                        <div class="fw-bold mb-2">{{ $tLabel }}</div>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @php($actions = ['view' => 'عرض','create' => 'إنشاء','update' =>
+                                            'تعديل','delete' => 'حذف'])
+                                            @foreach($actions as $actKey => $actLabel)
+                                            @php($perm = 'letters.' . $tKey . '.' . $actKey)
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="perm-{{ $u->id }}-{{ $tKey }}-{{ $actKey }}"
+                                                    @checked($u->getPermissionNames()->contains($perm))
+                                                wire:change="updateUserPermission({{ $u->id }}, '{{ $tKey }}',
+                                                '{{ $actKey }}', $event.target.checked)">
+                                                <label class="form-check-label"
+                                                    for="perm-{{ $u->id }}-{{ $tKey }}-{{ $actKey }}">{{ $actLabel }}</label>
                                             </div>
+                                            @endforeach
                                         </div>
-                                    @endforeach
+                                    </div>
                                 </div>
+                                @endforeach
+                            </div>
                             @else
-                                <span class="text-muted">المدير يمتلك كافة الصلاحيات ضمن المؤسسة.</span>
+                            <span class="text-muted">المدير يمتلك كافة الصلاحيات ضمن المؤسسة.</span>
                             @endif
                         </td>
+                        @endif
                     </tr>
-                @endforeach
+                    @endforeach
                 </tbody>
             </table>
         </div>
@@ -129,10 +144,20 @@
 <script>
 document.addEventListener('livewire:init', () => {
     Livewire.on('user-created', () => {
-        Swal.fire({ icon: 'success', title: 'تم إنشاء المستخدم', timer: 2000, showConfirmButton: false });
+        Swal.fire({
+            icon: 'success',
+            title: 'تم إنشاء المستخدم',
+            timer: 2000,
+            showConfirmButton: false
+        });
     });
     Livewire.on('user-updated', () => {
-        Swal.fire({ icon: 'success', title: 'تم تحديث المستخدم', timer: 2000, showConfirmButton: false });
+        Swal.fire({
+            icon: 'success',
+            title: 'تم تحديث المستخدم',
+            timer: 2000,
+            showConfirmButton: false
+        });
     });
 });
 </script>

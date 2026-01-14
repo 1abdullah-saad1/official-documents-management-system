@@ -18,27 +18,35 @@ class UserManager extends Component
     use WithPagination;
 
     public string $search = '';
+
     public int $perPage = 10;
 
     public string $name = '';
+
     public string $email = '';
+
     public string $password = '';
+
     public ?int $selectedInstitutionId = null;
+
     public string $role = ''; // used only in manage table context
 
     public bool $showCreateModal = false;
 
     public array $specialties = [
-        'incoming' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
-        'outgoing' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
+        'external' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
+        'internal' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
         'memo' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
-        'personal' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
+        'personal_request' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
+        'outgoing' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
     ];
 
     protected function rules(): array
     {
         $emailRule = ['required', 'email', Rule::unique('users', 'email')];
-        $institutionRule = ['required', Rule::exists('institutions', 'id')];
+        // When null, we are creating a global superadmin; otherwise must exist
+        $institutionRule = ['nullable', 'integer', Rule::exists('institutions', 'id')];
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => $emailRule,
@@ -50,7 +58,6 @@ class UserManager extends Component
 
     public function openCreateModal(): void
     {
-        if (! $this->selectedInstitutionId) return;
         $this->showCreateModal = true;
     }
 
@@ -71,28 +78,17 @@ class UserManager extends Component
             'institution_id' => $this->selectedInstitutionId,
         ]);
 
-        // No role/permission assignment in create modal. Control via table.
+        // If no institution selected, make this a global superadmin
+        if (is_null($this->selectedInstitutionId)) {
+            app(PermissionRegistrar::class)->setPermissionsTeamId(null);
+            $user->assignRole('superadmin');
+        }
+
+        // Otherwise: No role/permission assignment in create modal. Control via table.
 
         $this->showCreateModal = false;
         $this->resetForm();
         $this->dispatch('user-created');
-    }
-
-    protected function ensureRoleExists(string $name): void
-    {
-        app(PermissionRegistrar::class)->setPermissionsTeamId($this->selectedInstitutionId);
-        $exists = Role::query()
-            ->where('name', $name)
-            ->where('guard_name', 'web')
-            ->when(config('permission.teams'), fn($q) => $q->where(config('permission.column_names.team_foreign_key'), $this->selectedInstitutionId))
-            ->exists();
-        if (! $exists) {
-            Role::query()->create([
-                'name' => $name,
-                'guard_name' => 'web',
-                config('permission.column_names.team_foreign_key') => $this->selectedInstitutionId,
-            ]);
-        }
     }
 
     protected function collectSelectedPermissions(): array
@@ -105,6 +101,7 @@ class UserManager extends Component
                 }
             }
         }
+
         return $list;
     }
 
@@ -115,23 +112,24 @@ class UserManager extends Component
         $this->password = '';
         $this->role = '';
         $this->specialties = [
-            'incoming' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
-            'outgoing' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
+            'external' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
+            'internal' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
             'memo' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
-            'personal' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
+            'personal_request' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
+            'outgoing' => ['view' => false, 'create' => false, 'update' => false, 'delete' => false],
         ];
     }
 
     public function updateAdminRole(int $userId, bool $isAdmin): void
     {
-        if (! $this->selectedInstitutionId) return;
+        if (! $this->selectedInstitutionId) {
+            return;
+        }
         app(PermissionRegistrar::class)->setPermissionsTeamId($this->selectedInstitutionId);
         $user = User::findOrFail($userId);
         if ($isAdmin) {
-            $this->ensureRoleExists('admin');
             $user->syncRoles(['admin']);
         } else {
-            $this->ensureRoleExists('user');
             $user->syncRoles(['user']);
         }
         $this->dispatch('user-updated');
@@ -139,12 +137,13 @@ class UserManager extends Component
 
     public function updateUserPermission(int $userId, string $type, string $action, bool $checked): void
     {
-        if (! $this->selectedInstitutionId) return;
+        if (! $this->selectedInstitutionId) {
+            return;
+        }
         app(PermissionRegistrar::class)->setPermissionsTeamId($this->selectedInstitutionId);
         $user = User::findOrFail($userId);
         // Ensure user role exists and is assigned when managing granular permissions
         if (! $user->hasRole('admin')) {
-            $this->ensureRoleExists('user');
             if (! $user->hasRole('user')) {
                 $user->assignRole('user');
             }
@@ -163,16 +162,22 @@ class UserManager extends Component
         $institutions = Institution::orderBy('name')->get();
 
         // Ensure reads use team context
-        if ($this->selectedInstitutionId) {
+        if (! is_null($this->selectedInstitutionId)) {
             app(PermissionRegistrar::class)->setPermissionsTeamId($this->selectedInstitutionId);
         }
 
-        $users = User::query()
-            ->when($this->selectedInstitutionId, fn($q) => $q->where('institution_id', $this->selectedInstitutionId))
+        $query = User::query();
+        if (is_null($this->selectedInstitutionId)) {
+            $query->whereNull('institution_id');
+        } else {
+            $query->where('institution_id', $this->selectedInstitutionId);
+        }
+
+        $users = $query
             ->when($this->search !== '', function ($q) {
                 $q->where(function ($qq) {
-                    $qq->where('name', 'like', '%' . $this->search . '%')
-                       ->orWhere('email', 'like', '%' . $this->search . '%');
+                    $qq->where('name', 'like', '%'.$this->search.'%')
+                        ->orWhere('email', 'like', '%'.$this->search.'%');
                 });
             })
             ->orderBy('id', 'desc')
@@ -183,10 +188,11 @@ class UserManager extends Component
             'institutions' => $institutions,
             'roles' => Role::query()->whereIn('name', ['admin', 'user'])->get(),
             'types' => [
-                'incoming' => 'الوارد',
-                'outgoing' => 'الصادر',
-                'memo' => 'مذكرة',
-                'personal' => 'شخصي',
+                'external' => 'واردة خارجية',
+                'internal' => 'واردة داخلية',
+                'memo' => 'مذكرات',
+                'personal_request' => 'طلبات الموظفين الشخصية',
+                'outgoing' => 'الصادرة',
             ],
         ]);
     }
