@@ -13,20 +13,17 @@
                         class="fas fa-home mx-2"></i>{{ __('الصفحة الرئيسية') }}</li>
             </a>
             @role('superadmin')
-            <a class="navbar-brand" href="{{ route('superadmin.departments.index') }}">
+            <a class="navbar-brand" href="{{ route('superadmin.institutions') }}">
                 <li class="list-group-item mx-2 my-1 rounded-2"><i
-                        class="fas fa-sitemap mx-2"></i>{{ __('إدارة الأقسام') }}
+                        class="fas fa-sitemap mx-2"></i>{{ __('إدارة المؤسسات') }}
                 </li>
             </a>
-            <a class="navbar-brand" href="{{ route('superadmin.addressees.index') }}">
+            <a class="navbar-brand" href="{{ route('superadmin.users') }}">
                 <li class="list-group-item mx-2 my-1 rounded-2"><i
-                        class="fas fa-envelope mx-2"></i>{{ __('إدارة جهات المخاطبة') }}
+                        class="fas fa-envelope mx-2"></i>{{ __('إدارة المستخدمين') }}
                 </li>
             </a>
-            <a class="navbar-brand" href="{{ route('superadmin.activity-logs') }}">
-                <li class="list-group-item mx-2 my-1 rounded-2"><i class="fas fa-list mx-2"></i>{{ __('سجلات النشاط') }}
-                </li>
-            </a>
+
             @endrole
         </ul>
     </div>
