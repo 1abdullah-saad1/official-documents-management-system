@@ -15,45 +15,41 @@
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
     @livewireStyles
     <style>
-    @font-face {
-        font-family: "Cairo";
-        src: url({{ asset('assets/fonts/Cairo-SemiBold.ttf')
-    }
-    }
+        @font-face {
+            font-family: "Cairo";
+            src: url({{ asset('assets/fonts/Cairo-SemiBold.ttf') }});
+        }
 
-    );
-    }
+        body {
+            font-family: 'Cairo', sans-serif;
+        }
 
-    body {
-        font-family: 'Cairo', sans-serif;
-    }
+        .app-header-shadow {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
 
-    .app-header-shadow {
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    }
+        .app-header-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1rem;
+            align-items: center;
+        }
 
-    .app-header-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 1rem;
-        align-items: center;
-    }
+        .app-logo {
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
 
-    .app-logo {
-        font-size: 1.125rem;
-        font-weight: 700;
-    }
+        .btn-clear {
+            background: transparent;
+            border: none;
+            padding: 0.25rem;
+            cursor: pointer;
+        }
 
-    .btn-clear {
-        background: transparent;
-        border: none;
-        padding: 0.25rem;
-        cursor: pointer;
-    }
-
-    .btn-clear:hover {
-        opacity: 0.7;
-    }
+        .btn-clear:hover {
+            opacity: 0.7;
+        }
     </style>
 
     @stack('styles')
@@ -68,77 +64,82 @@
     <div id="app">
         <!-- Sidebar -->
         @auth
-        @role('superadmin')
-        @include('components.layouts.sidebar')
-        @endrole
-        <header class="p-2 mb-3 border-bottom app-header-shadow">
-            <div class="container-fluid app-header-grid">
-                <div class="d-flex align-items-center">
-                    <img src="{{ asset('assets/images/legal-base-logo.png') }}" alt="logo" width="35" height="35"
-                        class="mx-2 rounded-circle">
-                    <div class="app-logo">
-                        {{ __('app.project_name') }}
+            @role('superadmin')
+                @include('components.layouts.sidebar')
+            @endrole
+            <header class="p-2 mb-3 border-bottom app-header-shadow">
+                <div class="container-fluid app-header-grid">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ asset('assets/images/logo.png') }}" alt="logo" width="35" height="35"
+                            class="mx-2 rounded-circle">
+                        <div class="app-logo">
+                            {{ __('app.project_name') }}
+                        </div>
+                        @role('superadmin')
+                            <button class="btn btn-clear" type="button" data-bs-toggle="offcanvas"
+                                data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">
+                                <i class="fas fa-bars fa-lg"></i>
+                            </button>
+                        @else
+                            <div class="app-logo mx-2">
+                                @php
+                                    $user = Auth::user();
+                                    $department = \App\Models\Departments::where(
+                                        'uuid',
+                                        $user->department_uuid,
+                                    )->first();
+                                @endphp
+                                {{ ' - ' . $department->name ?? '' }}
+                            </div>
+                        @endrole
                     </div>
-                    @role('superadmin')
-                    <button class="btn btn-clear" type="button" data-bs-toggle="offcanvas"
-                        data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">
-                        <i class="fas fa-bars fa-lg"></i>
-                    </button>
-                    @else
-                    <div class="app-logo mx-2">
-                        @php
-                        $user = Auth::user();
-                        $department = \App\Models\Departments::where('uuid', $user->department_uuid)->first();
-                        @endphp
-                        {{' - '. $department->name ?? '' }}
-                    </div>
-                    @endrole
-                </div>
-                <div class="d-flex align-items-center">
-                    <div class="w-100 me-3">
-                    </div>
-                    <div class="shrink-0 dropdown">
-                        <a href="#"
-                            class="d-flex align-items-center link-body-emphasis text-decoration-none dropdown-toggle"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            @if (session('avatarGoogleUser'))
-                            <img src="{{ session('avatarGoogleUser') }}" alt="{{ Auth::user()->name }}" width="35"
-                                height="35" class="rounded-circle me-2">
-                            @else
-                            <img src="{{ asset('assets/images/profile-avatar.png') }}" alt="{{ Auth::user()->name }}"
-                                width="35" height="35" class="rounded-circle me-2">
-                            @endif
-                        </a>
-                        <ul class="dropdown-menu text-small shadow">
-                            <li>
-                                <label class="dropdown-item">
-                                    {{ Auth::user()->name }}
-                                </label>
-                            </li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();
+                    <div class="d-flex align-items-center">
+                        <div class="w-100 me-3">
+                        </div>
+                        <div class="shrink-0 dropdown">
+                            <a href="#"
+                                class="d-flex align-items-center link-body-emphasis text-decoration-none dropdown-toggle"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                @if (session('avatarGoogleUser'))
+                                    <img src="{{ session('avatarGoogleUser') }}" alt="{{ Auth::user()->name }}"
+                                        width="35" height="35" class="rounded-circle me-2">
+                                @else
+                                    <img src="{{ asset('assets/images/profile-avatar.png') }}"
+                                        alt="{{ Auth::user()->name }}" width="35" height="35"
+                                        class="rounded-circle me-2">
+                                @endif
+                            </a>
+                            <ul class="dropdown-menu text-small shadow">
+                                <li>
+                                    <label class="dropdown-item">
+                                        {{ Auth::user()->name }}
+                                    </label>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="{{ route('logout') }}"
+                                        onclick="event.preventDefault();
                                       document.getElementById('logout-form').submit();">
-                                    <i class="fa fa-lock mx-2"></i>
-                                    {{ __('تسجيل الخروج') }}
-                                </a>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                    @csrf
-                                </form>
-                            </li>
-                        </ul>
+                                        <i class="fa fa-lock mx-2"></i>
+                                        {{ __('تسجيل الخروج') }}
+                                    </a>
+                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                        @csrf
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </header>
+            </header>
         @endauth
         <main class="py-4">
             <div class="container">
                 @isset($slot)
-                {{ $slot }}
+                    {{ $slot }}
                 @else
-                @yield('content')
+                    @yield('content')
                 @endisset
             </div>
         </main>
