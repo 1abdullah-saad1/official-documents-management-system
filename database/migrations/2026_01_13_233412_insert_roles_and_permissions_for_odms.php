@@ -10,60 +10,47 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (! Schema::hasTable('roles')
-            || ! Schema::hasTable('permissions')
-            || ! Schema::hasTable('role_has_permissions')
-        ) {
+        if (! Schema::hasTable('permissions')) {
             return;
         }
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $guard = 'web';
+        $types = ['incoming', 'outgoing', 'memo', 'personal'];
+        $actions = ['view', 'create', 'update', 'delete'];
 
-        $allPermissions = Permission::query()
-            ->where('guard_name', $guard)
-            ->where('name', 'like', 'letters.%')
-            ->pluck('name')
-            ->all();
-
-        $superadmin = Role::query()->where('guard_name', $guard)->where('name', 'superadmin')->first();
-        $admin = Role::query()->where('guard_name', $guard)->where('name', 'admin')->first();
-
-        if ($superadmin) {
-            $superadmin->syncPermissions($allPermissions);
+        foreach ($types as $type) {
+            foreach ($actions as $action) {
+                $name = "letters.$type.$action";
+                Permission::findOrCreate($name, $guard);
+            }
         }
-
-        if ($admin) {
-            // admin gets all letter permissions, but institution-scope is enforced by team_id + route team context
-            $admin->syncPermissions($allPermissions);
-        }
-
-        // NOTE: do NOT auto-assign permissions to "user" role here.
-        // Users will be specialized by letter type (incoming/outgoing/memo/personal) per institution.
-
+        Role::create(
+            [
+                'name' => 'superadmin',
+                'guard_name' => $guard,
+            ]
+        );
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     public function down(): void
     {
-        if (! Schema::hasTable('roles') || ! Schema::hasTable('role_has_permissions')) {
+        if (! Schema::hasTable('permissions')) {
             return;
         }
 
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
-
-        $guard = 'web';
-
-        $superadmin = Role::query()->where('guard_name', $guard)->where('name', 'superadmin')->first();
-        $admin = Role::query()->where('guard_name', $guard)->where('name', 'admin')->first();
-
-        if ($superadmin) {
-            $superadmin->syncPermissions([]);
+        $types = ['incoming', 'outgoing', 'memo', 'personal'];
+        $actions = ['view', 'create', 'update', 'delete'];
+        $names = [];
+        foreach ($types as $t) {
+            foreach ($actions as $a) {
+                $names[] = "letters.$t.$a";
+            }
         }
-        if ($admin) {
-            $admin->syncPermissions([]);
-        }
+
+        Permission::query()->whereIn('name', $names)->delete();
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }

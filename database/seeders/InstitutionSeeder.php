@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class InstitutionSeeder extends Seeder
 {
@@ -14,10 +16,24 @@ class InstitutionSeeder extends Seeder
         $data = $this->getData();
 
         foreach ($data as $item) {
-            \App\Models\Institution::updateOrCreate(
+            $institution = \App\Models\Institution::updateOrCreate(
                 $item['identifier'],
                 $item['data']
             );
+
+            // Auto-create institution-scoped roles (admin, user) for guard 'web'
+            app(PermissionRegistrar::class)->setPermissionsTeamId($institution->id);
+            $teamKey = config('permission.column_names.team_foreign_key');
+            Role::query()->firstOrCreate([
+                'name' => 'admin',
+                'guard_name' => 'web',
+                $teamKey => $institution->id,
+            ]);
+            Role::query()->firstOrCreate([
+                'name' => 'user',
+                'guard_name' => 'web',
+                $teamKey => $institution->id,
+            ]);
         }
     }
 
