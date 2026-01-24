@@ -51,7 +51,7 @@
     <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center gap-2" href="/">
-                <img class="logo" src="{{ asset('build/assets/images/logo.png') }}" alt="شعار جامعة الموصل"
+                <img class="logo" src="{{ asset('assets/images/logo.png') }}" alt="شعار جامعة الموصل"
                     onerror="this.onerror=null;this.src='{{ asset('images/mosul-placeholder.svg') }}'">
                 <span class="brand-title">جامعة الموصل</span>
             </a>
@@ -106,7 +106,7 @@
                     </div>
                 </div>
                 <div class="col-12 col-lg-6 text-center">
-                    <img class="img-fluid" src="{{ asset('build/assets/images/logo.png') }}" alt="شعار النظام"
+                    <img class="img-fluid" src="{{ asset('/assets/images/landing.png') }}" alt="شعار النظام"
                         style="max-height:220px"
                         onerror="this.onerror=null;this.src='{{ asset('images/mosul-placeholder.svg') }}'">
                 </div>

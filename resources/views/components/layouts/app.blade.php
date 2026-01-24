@@ -64,34 +64,23 @@
     <div id="app">
         <!-- Sidebar -->
         @auth
-            @role('superadmin')
-                @include('components.layouts.sidebar')
-            @endrole
+            @include('components.layouts.sidebar')
             <header class="p-2 mb-3 border-bottom app-header-shadow">
                 <div class="container-fluid app-header-grid">
                     <div class="d-flex align-items-center">
                         <img src="{{ asset('assets/images/logo.png') }}" alt="logo" width="35" height="35"
                             class="mx-2 rounded-circle">
                         <div class="app-logo">
-                            {{ __('app.project_name') }}
+                            {{ __('منظومة ادارة الوثائق الرسمية') }}
                         </div>
-                        @role('superadmin')
-                            <button class="btn btn-clear" type="button" data-bs-toggle="offcanvas"
-                                data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">
-                                <i class="fas fa-bars fa-lg"></i>
-                            </button>
-                        @else
-                            <div class="app-logo mx-2">
-                                @php
-                                    $user = Auth::user();
-                                    $department = \App\Models\Departments::where(
-                                        'uuid',
-                                        $user->department_uuid,
-                                    )->first();
-                                @endphp
-                                {{ ' - ' . $department->name ?? '' }}
-                            </div>
-                        @endrole
+                        <button class="btn btn-clear" type="button" data-bs-toggle="offcanvas"
+                            data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">
+                            <i class="fas fa-bars fa-lg"></i>
+                        </button>
+                        <div class="app-logo mx-2">
+
+                            {{ '  ' . auth()->user()->institution ? auth()->user()->institutionname : 'المشرف العام' }}
+                        </div>
                     </div>
                     <div class="d-flex align-items-center">
                         <div class="w-100 me-3">
