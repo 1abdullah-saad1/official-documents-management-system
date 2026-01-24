@@ -29,6 +29,9 @@
                         <td>{{ $inst->id }}</td>
                         <td>{{ $inst->name }}</td>
                         <td class="text-end">
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('institutions.parties', $inst) }}" title="إدارة الجهات">
+                                <i class="fa-solid fa-people-group"></i>
+                            </a>
                             <button class="btn btn-sm btn-outline-primary" wire:click="edit({{ $inst->id }})">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>

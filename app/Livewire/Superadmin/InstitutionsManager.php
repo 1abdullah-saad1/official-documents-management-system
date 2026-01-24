@@ -8,6 +8,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 #[Layout('layouts.livewire.superadmin')]
 class InstitutionsManager extends Component
@@ -50,9 +52,24 @@ class InstitutionsManager extends Component
     public function create(): void
     {
         $this->validate();
-        Institution::create([
+        $institution = Institution::create([
             'name' => $this->name,
         ]);
+
+        // Auto-create institution-scoped roles (admin, user)
+        app(PermissionRegistrar::class)->setPermissionsTeamId($institution->id);
+        $teamKey = config('permission.column_names.team_foreign_key');
+        Role::query()->firstOrCreate([
+            'name' => 'admin',
+            'guard_name' => 'web',
+            $teamKey => $institution->id,
+        ]);
+        Role::query()->firstOrCreate([
+            'name' => 'user',
+            'guard_name' => 'web',
+            $teamKey => $institution->id,
+        ]);
+
         $this->showModal = false;
         $this->resetForm();
         $this->dispatch('institution-created');
